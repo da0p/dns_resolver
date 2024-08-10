@@ -1,0 +1,18 @@
+[package]
+name = "dns_resolver"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+byteorder = "1.5.0"
+rand = "0.8.5"
+clap = { version = "4.5.7", features = ["derive"] }
+spdlog-rs = "0.3"
+
+[lib]
+name = "dns_resolver"
+path = "src/lib/lib.rs"
+
+[[bin]]
+name = "dns_resolver"
+path = "src/main.rs"
