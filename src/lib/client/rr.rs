@@ -54,7 +54,7 @@ impl ResourceRecord {
         if is_pointer == 0xC0 {
             let offset = (utility::to_u16(&message[start..start + 2]) & 0x3F) as usize;
             let null_pos = utility::find_first_null(&message[offset as usize..])?;
-            let rr_name = message[offset as usize.. offset + null_pos + 1].to_vec();
+            let rr_name = message[offset as usize..offset + null_pos + 1].to_vec();
             let rr_type = utility::to_u16(&message[start + 2..start + 4]);
             let rr_class = utility::to_u16(&message[start + 4..start + 6]);
             let rr_ttl = utility::to_u32(&message[start + 6..start + 10]);
@@ -90,5 +90,18 @@ impl ResourceRecord {
             };
             Ok((offset + 11 + rr_rdlength as usize, rr))
         }
+    }
+
+    /// Get the ip address from resource record
+    pub fn get_ip_addr(&self) -> String {
+        self.rr_rdata
+            .iter()
+            .map(|&seg| seg.to_string())
+            .collect::<Vec<String>>()
+            .join(".")
+    }
+
+    pub fn is_host_addr(&self) -> bool {
+        self.rr_type == 0x01
     }
 }

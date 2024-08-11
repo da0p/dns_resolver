@@ -5,7 +5,6 @@ use std::{
 };
 
 use message::DnsMessage;
-use rr::ResourceRecord;
 
 pub mod header;
 pub mod message;
@@ -46,7 +45,7 @@ impl DnsClient {
                 println!("[\n\t{}\n]", ip_addrs.join("\n\t"));
                 found_ip_addrs = true;
                 break;
-            } 
+            }
         }
         if !found_ip_addrs {
             error!("Can's resolve {}", host_name);
@@ -56,18 +55,18 @@ impl DnsClient {
     /// Get all root servers address
     fn get_root_servers(&self) -> Vec<String> {
         vec![
-            String::from("198.41.0.4"), // a.root-servers.net
-            String::from("199.9.14.201"), // b.root-servers.net
-            String::from("192.33.4.12"), // c.root-servers.net
-            String::from("199.7.91.13"), // d.root-servers.net
+            String::from("198.41.0.4"),     // a.root-servers.net
+            String::from("199.9.14.201"),   // b.root-servers.net
+            String::from("192.33.4.12"),    // c.root-servers.net
+            String::from("199.7.91.13"),    // d.root-servers.net
             String::from("192.203.230.10"), // e.root-servers.net
-            String::from("192.5.5.241"),  // f.root-servers.net
-            String::from("198.97.190.53"), // h.root-servers.net
-            String::from("192.36.148.17"), // i.root-servers.net
-            String::from("192.58.128.30"), // j.root-servers.net
-            String::from("193.0.14.129"), // k.root-servers.net
-            String::from("199.7.83.42"), // l.root-servers.net
-            String::from("202.12.27.33") // m.root-servers.net
+            String::from("192.5.5.241"),    // f.root-servers.net
+            String::from("198.97.190.53"),  // h.root-servers.net
+            String::from("192.36.148.17"),  // i.root-servers.net
+            String::from("192.58.128.30"),  // j.root-servers.net
+            String::from("193.0.14.129"),   // k.root-servers.net
+            String::from("199.7.83.42"),    // l.root-servers.net
+            String::from("202.12.27.33"),   // m.root-servers.net
         ]
     }
 
@@ -88,15 +87,25 @@ impl DnsClient {
                 info!("Querying {} for {}", dns_server, host_name);
                 self.send(&dns_server, 53, &dns_question.into_bytes());
                 let bytes = self.listen().unwrap();
+                println!("{:#2x?}", bytes);
                 let dns_response = DnsMessage::parse(&bytes).unwrap();
                 if dns_response.header.an_cnt > 0 {
-                    let ip_addrs = self.parse_rr(0x01, &dns_response.answers);
+                    let ip_addrs = dns_response
+                        .answers
+                        .iter()
+                        .filter(|an| an.is_host_addr())
+                        .map(|an| an.get_ip_addr())
+                        .collect();
                     return (Some(ip_addrs), None);
                 }
 
                 if dns_response.header.ar_cnt > 0 {
-                    let mut auth_servers =
-                        VecDeque::from(self.parse_rr(0x01, &dns_response.additionals));
+                    let mut auth_servers = dns_response
+                        .additionals
+                        .iter()
+                        .filter(|ar| ar.is_host_addr())
+                        .map(|ar| ar.get_ip_addr())
+                        .collect();
                     dns_servers.append(&mut auth_servers);
                 } else if dns_response.header.ns_cnt > 0 {
                     ns_names = dns_response
@@ -112,26 +121,6 @@ impl DnsClient {
         }
 
         (None, None)
-    }
-
-    /// Parse resource records and transform them into ip addresses
-    fn parse_rr(&self, rr_type: u16, rrs: &Vec<ResourceRecord>) -> Vec<String> {
-        let mut ip_addrs = vec![];
-        for i in 0..rrs.len() {
-            if rrs[i].rr_type == rr_type {
-                ip_addrs.push(self.get_ip_addr(&rrs[i]));
-            }
-        }
-        ip_addrs
-    }
-
-    /// Show IP address in DNS answer section
-    fn get_ip_addr(&self, rr: &ResourceRecord) -> String {
-        rr.rr_rdata
-            .iter()
-            .map(|&seg| seg.to_string())
-            .collect::<Vec<String>>()
-            .join(".")
     }
 
     /// Send a udp message to a remote address
