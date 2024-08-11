@@ -36,17 +36,21 @@ impl DnsClient {
     /// Query a host name from a DNS server
     pub fn ask(&self, host_name: &str) {
         let mut dns_servers = VecDeque::from(self.get_root_servers());
+        let mut found_ip_addrs = false;
         while !dns_servers.is_empty() {
             let dns_server = dns_servers.pop_front().unwrap();
             let (ip_addrs, _) = self.resolve_name(host_name, &dns_server);
             if ip_addrs.is_some() {
                 let ip_addrs = ip_addrs.unwrap();
-                info!("IP Address: \n");
+                println!("IP Address: \n");
                 println!("[\n\t{}\n]", ip_addrs.join("\n\t"));
+                found_ip_addrs = true;
                 break;
             } 
         }
-        error!("Can's resolve {}", host_name);
+        if !found_ip_addrs {
+            error!("Can's resolve {}", host_name);
+        }
     }
 
     /// Get all root servers address

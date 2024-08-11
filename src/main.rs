@@ -10,7 +10,7 @@ struct Options {
 }
 
 fn main() {
-    spdlog::default_logger().set_level_filter(spdlog::LevelFilter::Equal(spdlog::Level::Info));
+    spdlog::default_logger().set_level_filter(spdlog::LevelFilter::Equal(spdlog::Level::Error));
     let options = Options::parse();
     let dns_client = client::DnsClient::new();
     dns_client.ask(&options.host);
