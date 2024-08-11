@@ -19,3 +19,6 @@ cargo run -- HOST_NAME
 ```rust
 cargo test
 ```
+
+# Note
+This project is built based on the [Coding Challenge](https://codingchallenges.substack.com/p/coding-challenge-22-dns-resolver) proposed by John Cricket.

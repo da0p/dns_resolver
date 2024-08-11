@@ -87,7 +87,6 @@ impl DnsClient {
                 info!("Querying {} for {}", dns_server, host_name);
                 self.send(&dns_server, 53, &dns_question.into_bytes());
                 let bytes = self.listen().unwrap();
-                println!("{:#2x?}", bytes);
                 let dns_response = DnsMessage::parse(&bytes).unwrap();
                 if dns_response.header.an_cnt > 0 {
                     let ip_addrs = dns_response
